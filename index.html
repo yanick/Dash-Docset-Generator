@@ -1,0 +1,2963 @@
+<body>
+<h1 id="swagger-restful-api-documentation-specification">Swagger RESTful API Documentation Specification</h1>
+<h4 id="version-2-0">Version 2.0</h4>
+<p>The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;, &quot;MAY&quot;, and &quot;OPTIONAL&quot; in this document are to be interpreted as described in <a href="http://www.ietf.org/rfc/rfc2119.txt">RFC 2119</a>.</p>
+<p>The Swagger specification is licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0.html">The Apache License, Version 2.0</a>.</p>
+<h2 id="introduction">Introduction</h2>
+<p>Swagger™  is a project used to describe and document RESTful APIs.</p>
+<p>The Swagger specification defines a set of files required to describe such an API. These files can then be used by the Swagger-UI project to display the API and Swagger-Codegen to generate clients in various languages. Additional utilities can also take advantage of the resulting files, such as testing tools.</p>
+<h2 id="revision-history">Revision History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.0</td>
+<td>2014-09-08</td>
+<td>Release of Swagger 2.0</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>2014-03-14</td>
+<td>Initial release of the formal document.</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>2012-08-22</td>
+<td>Release of Swagger 1.1</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>2011-08-10</td>
+<td>First release of the Swagger Specification</td>
+</tr>
+</tbody>
+</table>
+<h2 id="definitions">Definitions</h2>
+<h5 id="-a-name-pathtemplating-a-path-templating"><a name="pathTemplating"></a>Path Templating</h5>
+<p>Path templating refers to the usage of curly braces ({}) to mark a section of a URL path as replaceable using path parameters.</p>
+<h5 id="-a-name-mimetypes-a-mime-types"><a name="mimeTypes"></a>Mime Types</h5>
+<p>Mime type definitions are spread across several resources. The mime type definitions should be in compliance with <a href="http://tools.ietf.org/html/rfc6838">RFC 6838</a>.</p>
+<p>Some examples of possible mime type definitions:</p>
+<pre><code>  text/plain; charset=utf-8
+  application/json
+  application/vnd.github+json
+  application/vnd.github.v3+json
+  application/vnd.github.v3.raw+json
+  application/vnd.github.v3.text+json
+  application/vnd.github.v3.html+json
+  application/vnd.github.v3.full+json
+  application/vnd.github.v3.diff
+  application/vnd.github.v3.patch
+</code></pre><h5 id="-a-name-httpcodes-a-http-status-codes"><a name="httpCodes"></a>HTTP Status Codes</h5>
+<p>The HTTP Status Codes are used to indicate the status of the executed operation. The available status codes are described by <a href="http://tools.ietf.org/html/rfc7231#section-6">RFC 7231</a> and in the <a href="http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml">IANA Status Code Registry</a>.</p>
+<h2 id="specification">Specification</h2>
+<h3 id="format">Format</h3>
+<p>The files describing the RESTful API in accordance with the Swagger specification are represented as JSON objects and conform to the JSON standards. YAML, being a superset of JSON, can be used as well to 
+represent a Swagger specification file.</p>
+<p>For example, if a field is said to have an array value, the JSON array representation will be used:</p>
+<pre><code class="lang-js">{
+   &quot;field&quot; : [...]
+}
+</code></pre>
+<p>While the API is described using JSON it does not impose a JSON input/output to the API itself.</p>
+<p>All field names in the specification are <strong>case sensitive</strong>.</p>
+<p>The schema exposes two types of fields. Fixed fields, which have a declared name, and Patterned fields, which declare a regex pattern for the field name. Patterned fields can have multiple occurrences as long as each has a unique name. </p>
+<h3 id="file-structure">File Structure</h3>
+<p>The Swagger representation of the API is made of a single file. However, parts of the definitions can be split into separate files, at the discretion of the user. This is applicable for <code>$ref</code> fields in the specification as follows from the <a href="http://json-schema.org">JSON Schema</a> definitions.</p>
+<p>By convention, the Swagger specification file is named <code>swagger.json</code>.</p>
+<h3 id="data-types">Data Types</h3>
+<p>Primitive data types in the Swagger Specification are based on the types supported by the <a href="http://json-schema.org/latest/json-schema-core.html#anchor8">JSON-Schema Draft 4</a>. Models are described using the <a href="#schemaObject">Schema Object</a> which is a subset of JSON Schema Draft 4.</p>
+<p>An additional primitive data type <code>&quot;file&quot;</code> is used by the <a href="#parameterObject">Parameter Object</a> and the <a href="#responseObject">Response Object</a> to set the parameter type or the response as being a file.</p>
+<p><a name="dataTypeFormat"></a>Primitives have an optional modifier property <code>format</code>. Swagger uses several known formats to more finely define the data type being used. However, the <code>format</code> property is an open <code>string</code>-valued property, and can have any value to support documentation needs. Formats such as <code>&quot;email&quot;</code>, <code>&quot;uuid&quot;</code>, etc., can be used even though they are not defined by this specification. Types that are not accompanied by a <code>format</code> property follow their definition from the JSON Schema (except for <code>file</code> type which is defined above). The formats defined by the Swagger Specification are:</p>
+<table>
+<thead>
+<tr>
+<th>Common Name</th>
+<th><a href="#dataTypeType"><code>type</code></a></th>
+<th><a href="#dataTypeFormat"><code>format</code></a></th>
+<th>Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>integer</td>
+<td><code>integer</code></td>
+<td><code>int32</code></td>
+<td>signed 32 bits</td>
+</tr>
+<tr>
+<td>long</td>
+<td><code>integer</code></td>
+<td><code>int64</code></td>
+<td>signed 64 bits</td>
+</tr>
+<tr>
+<td>float</td>
+<td><code>number</code></td>
+<td><code>float</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>double</td>
+<td><code>number</code></td>
+<td><code>double</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>byte</td>
+<td><code>string</code></td>
+<td><code>byte</code></td>
+<td>base64 encoded characters</td>
+</tr>
+<tr>
+<td>binary</td>
+<td><code>string</code></td>
+<td><code>binary</code></td>
+<td>any sequence of octets</td>
+</tr>
+<tr>
+<td>boolean</td>
+<td><code>boolean</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>date</td>
+<td><code>string</code></td>
+<td><code>date</code></td>
+<td>As defined by <code>full-date</code> - <a href="http://xml2rfc.ietf.org/public/rfc/html/rfc3339.html#anchor14">RFC3339</a></td>
+</tr>
+<tr>
+<td>dateTime</td>
+<td><code>string</code></td>
+<td><code>date-time</code></td>
+<td>As defined by <code>date-time</code> - <a href="http://xml2rfc.ietf.org/public/rfc/html/rfc3339.html#anchor14">RFC3339</a></td>
+</tr>
+<tr>
+<td>password</td>
+<td><code>string</code></td>
+<td><code>password</code></td>
+<td>Used to hint UIs the input needs to be obscured.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="schema">Schema</h3>
+<h4 id="-a-name-swaggerobject-a-swagger-object"><a name="swaggerObject"></a>Swagger Object</h4>
+<p>This is the root document object for the API specification. It combines what previously was the Resource Listing and API Declaration (version 1.2 and earlier) together into one document.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="swaggerSwagger"></a>swagger</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> Specifies the Swagger Specification version being used. It can be used by the Swagger UI and other clients to interpret the API listing. The value MUST be <code>&quot;2.0&quot;</code>.</td>
+</tr>
+<tr>
+<td><a name="swaggerInfo"></a>info</td>
+<td style="text-align:center"><a href="#infoObject">Info Object</a></td>
+<td><strong>Required.</strong> Provides metadata about the API. The metadata can be used by the clients if needed.</td>
+</tr>
+<tr>
+<td><a name="swaggerHost"></a>host</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The host (name or ip) serving the API. This MUST be the host only and does not include the scheme nor sub-paths. It MAY include a port. If the <code>host</code> is not included, the host serving the documentation is to be used (including the port). The <code>host</code> does not support <a href="#pathTemplating">path templating</a>.</td>
+</tr>
+<tr>
+<td><a name="swaggerBasePath"></a>basePath</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The base path on which the API is served, which is relative to the <a href="#swaggerHost"><code>host</code></a>. If it is not included, the API is served directly under the <code>host</code>. The value MUST start with a leading slash (<code>/</code>). The <code>basePath</code> does not support <a href="#pathTemplating">path templating</a>. </td>
+</tr>
+<tr>
+<td><a name="swaggerSchemes"></a>schemes</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>The transfer protocol of the API. Values MUST be from the list: <code>&quot;http&quot;</code>, <code>&quot;https&quot;</code>, <code>&quot;ws&quot;</code>, <code>&quot;wss&quot;</code>. If the <code>schemes</code> is not included, the default scheme to be used is the one used to access the Swagger definition itself.</td>
+</tr>
+<tr>
+<td><a name="swaggerConsumes"></a>consumes</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>A list of MIME types the APIs can consume. This is global to all APIs but can be overridden on specific API calls. Value MUST be as described under <a href="#mimeTypes">Mime Types</a>.</td>
+</tr>
+<tr>
+<td><a name="swaggerProduces"></a>produces</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>A list of MIME types the APIs can produce. This is global to all APIs but can be overridden on specific API calls. Value MUST be as described under <a href="#mimeTypes">Mime Types</a>.</td>
+</tr>
+<tr>
+<td><a name="swaggerPaths"></a>paths</td>
+<td style="text-align:center"><a href="#pathsObject">Paths Object</a></td>
+<td><strong>Required.</strong> The available paths and operations for the API.</td>
+</tr>
+<tr>
+<td><a name="swaggerDefinitions"></a>definitions</td>
+<td style="text-align:center"><a href="#definitionsObject">Definitions Object</a></td>
+<td>An object to hold data types produced and consumed by operations.</td>
+</tr>
+<tr>
+<td><a name="swaggerParameters"></a>parameters</td>
+<td style="text-align:center"><a href="#parametersDefinitionsObject">Parameters Definitions Object</a></td>
+<td>An object to hold parameters that can be used across operations. This property <em>does not</em> define global parameters for all operations.</td>
+</tr>
+<tr>
+<td><a name="swaggerResponses"></a>responses</td>
+<td style="text-align:center"><a href="#responsesDefinitionsObject">Responses Definitions Object</a></td>
+<td>An object to hold responses that can be used across operations. This property <em>does not</em> define global responses for all operations.</td>
+</tr>
+<tr>
+<td><a name="swaggerSecurityDefinitions"></a>securityDefinitions</td>
+<td style="text-align:center"><a href="#securityDefinitionsObject">Security Definitions Object</a></td>
+<td>Security scheme definitions that can be used across the specification.</td>
+</tr>
+<tr>
+<td><a name="swaggerSecurity"></a>security</td>
+<td style="text-align:center">[<a href="#securityRequirementObject">Security Requirement Object</a>]</td>
+<td>A declaration of which security schemes are applied for the API as a whole. The list of values describes alternative security schemes that can be used (that is, there is a logical OR between the security requirements). Individual operations can override this definition.</td>
+</tr>
+<tr>
+<td><a name="swaggerTags"></a>tags</td>
+<td style="text-align:center">[<a href="#tagObject">Tag Object</a>]</td>
+<td>A list of tags used by the specification with additional metadata. The order of the tags can be used to reflect on their order by the parsing tools. Not all tags that are used by the <a href="#operationObject">Operation Object</a> must be declared. The tags that are not declared may be organized randomly or based on the tools&#39; logic. Each tag name in the list MUST be unique.</td>
+</tr>
+<tr>
+<td><a name="swaggerExternalDocs"></a>externalDocs</td>
+<td style="text-align:center"><a href="#externalDocumentationObject">External Documentation Object</a></td>
+<td>Additional external documentation.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="swaggerExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="-a-name-infoobject-a-info-object"><a name="infoObject"></a>Info Object</h4>
+<p>The object provides metadata about the API. The metadata can be used by the clients if needed, and can be presented in the Swagger-UI for convenience.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="infoTitle"></a>title</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The title of the application.</td>
+</tr>
+<tr>
+<td><a name="infoDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A short description of the application. <a href="https://help.github.com/articles/github-flavored-markdown">GFM syntax</a> can be used for rich text representation.</td>
+</tr>
+<tr>
+<td><a name="infoTermsOfService"></a>termsOfService</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The Terms of Service for the API.</td>
+</tr>
+<tr>
+<td><a name="infoContact"></a>contact</td>
+<td style="text-align:center"><a href="#contactObject">Contact Object</a></td>
+<td>The contact information for the exposed API.</td>
+</tr>
+<tr>
+<td><a name="infoLicense"></a>license</td>
+<td style="text-align:center"><a href="#licenseObject">License Object</a></td>
+<td>The license information for the exposed API.</td>
+</tr>
+<tr>
+<td><a name="infoVersion"></a>version</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required</strong> Provides the version of the application API (not to be confused with the specification version).</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="infoExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="info-object-example-">Info Object Example:</h5>
+<pre><code class="lang-js">{
+  &quot;title&quot;: &quot;Swagger Sample App&quot;,
+  &quot;description&quot;: &quot;This is a sample server Petstore server.&quot;,
+  &quot;termsOfService&quot;: &quot;http://swagger.io/terms/&quot;,
+  &quot;contact&quot;: {
+    &quot;name&quot;: &quot;API Support&quot;,
+    &quot;url&quot;: &quot;http://www.swagger.io/support&quot;,
+    &quot;email&quot;: &quot;support@swagger.io&quot;
+  },
+  &quot;license&quot;: {
+    &quot;name&quot;: &quot;Apache 2.0&quot;,
+    &quot;url&quot;: &quot;http://www.apache.org/licenses/LICENSE-2.0.html&quot;
+  },
+  &quot;version&quot;: &quot;1.0.1&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">title: Swagger Sample App
+description: This is a sample server Petstore server.
+termsOfService: http://swagger.io/terms/
+contact:
+  name: API Support
+  url: http://www.swagger.io/support
+  email: support@swagger.io
+license:
+  name: Apache 2.0
+  url: http://www.apache.org/licenses/LICENSE-2.0.html
+version: 1.0.1
+</code></pre>
+<h4 id="-a-name-contactobject-a-contact-object"><a name="contactObject"></a>Contact Object</h4>
+<p>Contact information for the exposed API.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="contactName"></a>name</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The identifying name of the contact person/organization.</td>
+</tr>
+<tr>
+<td><a name="contactUrl"></a>url</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The URL pointing to the contact information. MUST be in the format of a URL.</td>
+</tr>
+<tr>
+<td><a name="contactEmail"></a>email</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The email address of the contact person/organization. MUST be in the format of an email address.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="contactExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="contact-object-example-">Contact Object Example:</h5>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;API Support&quot;,
+  &quot;url&quot;: &quot;http://www.swagger.io/support&quot;,
+  &quot;email&quot;: &quot;support@swagger.io&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">name: API Support
+url: http://www.swagger.io/support
+email: support@swagger.io
+</code></pre>
+<h4 id="-a-name-licenseobject-a-license-object"><a name="licenseObject"></a>License Object</h4>
+<p>License information for the exposed API.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="licenseName"></a>name</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The license name used for the API.</td>
+</tr>
+<tr>
+<td><a name="licenseUrl"></a>url</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A URL to the license used for the API. MUST be in the format of a URL.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="licenseExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="license-object-example-">License Object Example:</h5>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;Apache 2.0&quot;,
+  &quot;url&quot;: &quot;http://www.apache.org/licenses/LICENSE-2.0.html&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">name: Apache 2.0
+url: http://www.apache.org/licenses/LICENSE-2.0.html
+</code></pre>
+<h4 id="-a-name-pathsobject-a-paths-object"><a name="pathsObject"></a>Paths Object</h4>
+<p>Holds the relative paths to the individual endpoints. The path is appended to the <a href="#swaggerBasePath"><code>basePath</code></a> in order to construct the full URL.
+The Paths may be empty, due to <a href="#securityFiltering">ACL constraints</a>.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="pathsPath"></a>/{path}</td>
+<td style="text-align:center"><a href="#pathItemObject">Path Item Object</a></td>
+<td>A relative path to an individual endpoint. The field name MUST begin with a slash. The path is appended to the <a href="#swaggerBasePath"><code>basePath</code></a> in order to construct the full URL. <a href="#pathTemplating">Path templating</a> is allowed.</td>
+</tr>
+<tr>
+<td><a name="pathsExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details. </td>
+</tr>
+</tbody>
+</table>
+<h5 id="paths-object-example">Paths Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;/pets&quot;: {
+    &quot;get&quot;: {
+      &quot;description&quot;: &quot;Returns all pets from the system that the user has access to&quot;,
+      &quot;produces&quot;: [
+        &quot;application/json&quot;
+      ],
+      &quot;responses&quot;: {
+        &quot;200&quot;: {
+          &quot;description&quot;: &quot;A list of pets.&quot;,
+          &quot;schema&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: {
+              &quot;$ref&quot;: &quot;#/definitions/pet&quot;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">/pets:
+  get:
+    description: Returns all pets from the system that the user has access to
+    produces:
+    - application/json
+    responses:
+      200:
+        description: A list of pets.
+        schema:
+          type: array
+          items:
+            $ref: &#39;#/definitions/pet&#39;
+</code></pre>
+<h4 id="-a-name-pathitemobject-a-path-item-object"><a name="pathItemObject"></a>Path Item Object</h4>
+<p>Describes the operations available on a single path.
+A Path Item may be empty, due to <a href="#securityFiltering">ACL constraints</a>. The path itself is still exposed to the documentation viewer but they will not know which operations and parameters are available.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="pathItemRef"></a>$ref</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Allows for an external definition of this path item. The referenced structure MUST be in the format of a <a href="#pathItemObject">Path Item Object</a>. If there are conflicts between the referenced definition and this Path Item&#39;s definition, the behavior is <em>undefined</em>.</td>
+</tr>
+<tr>
+<td><a name="pathItemGet"></a>get</td>
+<td style="text-align:center"><a href="#operationObject">Operation Object</a></td>
+<td>A definition of a GET operation on this path.</td>
+</tr>
+<tr>
+<td><a name="pathItemPut"></a>put</td>
+<td style="text-align:center"><a href="#operationObject">Operation Object</a></td>
+<td>A definition of a PUT operation on this path.</td>
+</tr>
+<tr>
+<td><a name="pathItemPost"></a>post</td>
+<td style="text-align:center"><a href="#operationObject">Operation Object</a></td>
+<td>A definition of a POST operation on this path.</td>
+</tr>
+<tr>
+<td><a name="pathItemDelete"></a>delete</td>
+<td style="text-align:center"><a href="#operationObject">Operation Object</a></td>
+<td>A definition of a DELETE operation on this path.</td>
+</tr>
+<tr>
+<td><a name="pathItemOptions"></a>options</td>
+<td style="text-align:center"><a href="#operationObject">Operation Object</a></td>
+<td>A definition of a OPTIONS operation on this path.</td>
+</tr>
+<tr>
+<td><a name="pathItemHead"></a>head</td>
+<td style="text-align:center"><a href="#operationObject">Operation Object</a></td>
+<td>A definition of a HEAD operation on this path.</td>
+</tr>
+<tr>
+<td><a name="pathItemPatch"></a>patch</td>
+<td style="text-align:center"><a href="#operationObject">Operation Object</a></td>
+<td>A definition of a PATCH operation on this path.</td>
+</tr>
+<tr>
+<td><a name="pathItemParameters"></a>parameters</td>
+<td style="text-align:center">[<a href="#parameterObject">Parameter Object</a> <span>&#124;</span> <a href="#referenceObject">Reference Object</a>]</td>
+<td>A list of parameters that are applicable for all the operations described under this path. These parameters can be overridden at the operation level, but cannot be removed there. The list MUST NOT include duplicated parameters. A unique parameter is defined by a combination of a <a href="#parameterName">name</a> and <a href="#parameterIn">location</a>. The list can use the <a href="#referenceObject">Reference Object</a> to link to parameters that are defined at the <a href="#swaggerParameters">Swagger Object&#39;s parameters</a>. There can be one &quot;body&quot; parameter at most.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="pathItemExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details. </td>
+</tr>
+</tbody>
+</table>
+<h5 id="path-item-object-example">Path Item Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;get&quot;: {
+    &quot;description&quot;: &quot;Returns pets based on ID&quot;,
+    &quot;summary&quot;: &quot;Find pets by ID&quot;,
+    &quot;operationId&quot;: &quot;getPetsById&quot;,
+    &quot;produces&quot;: [
+      &quot;application/json&quot;,
+      &quot;text/html&quot;
+    ],
+    &quot;responses&quot;: {
+      &quot;200&quot;: {
+        &quot;description&quot;: &quot;pet response&quot;,
+        &quot;schema&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/definitions/Pet&quot;
+          }
+        }
+      },
+      &quot;default&quot;: {
+        &quot;description&quot;: &quot;error payload&quot;,
+        &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/definitions/ErrorModel&quot;
+        }
+      }
+    }
+  },
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;id&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;description&quot;: &quot;ID of pet to use&quot;,
+      &quot;required&quot;: true,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;collectionFormat&quot;: &quot;csv&quot;
+    }
+  ]
+}
+</code></pre>
+<pre><code class="lang-yaml">get:
+  description: Returns pets based on ID
+  summary: Find pets by ID
+  operationId: getPetsById
+  produces:
+  - application/json
+  - text/html
+  responses:
+    200:
+      description: pet response
+      schema:
+        type: array
+        items:
+          $ref: &#39;#/definitions/Pet&#39;
+    default:
+      description: error payload
+      schema:
+        $ref: &#39;#/definitions/ErrorModel&#39;
+parameters:
+- name: id
+  in: path
+  description: ID of pet to use
+  required: true
+  type: array
+  items:
+    type: string
+  collectionFormat: csv
+</code></pre>
+<h4 id="-a-name-operationobject-a-operation-object"><a name="operationObject"></a>Operation Object</h4>
+<p>Describes a single API operation on a path.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="operationTags"></a>tags</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>A list of tags for API documentation control. Tags can be used for logical grouping of operations by resources or any other qualifier.</td>
+</tr>
+<tr>
+<td><a name="operationSummary"></a>summary</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A short summary of what the operation does. For maximum readability in the swagger-ui, this field SHOULD be less than 120 characters.</td>
+</tr>
+<tr>
+<td><a name="operationDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A verbose explanation of the operation behavior. <a href="https://help.github.com/articles/github-flavored-markdown">GFM syntax</a> can be used for rich text representation.</td>
+</tr>
+<tr>
+<td><a name="operationExternalDocs"></a>externalDocs</td>
+<td style="text-align:center"><a href="#externalDocumentationObject">External Documentation Object</a></td>
+<td>Additional external documentation for this operation.</td>
+</tr>
+<tr>
+<td><a name="operationId"></a>operationId</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Unique string used to identify the operation. The id MUST be unique among all operations described in the API. Tools and libraries MAY use the operationId to uniquely identify an operation, therefore, it is recommended to follow common programming naming conventions.</td>
+</tr>
+<tr>
+<td><a name="operationConsumes"></a>consumes</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>A list of MIME types the operation can consume. This overrides the <a href="#swaggerConsumes"><code>consumes</code></a> definition at the Swagger Object. An empty value MAY be used to clear the global definition. Value MUST be as described under <a href="#mimeTypes">Mime Types</a>.</td>
+</tr>
+<tr>
+<td><a name="operationProduces"></a>produces</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>A list of MIME types the operation can produce. This overrides the <a href="#swaggerProduces"><code>produces</code></a> definition at the Swagger Object. An empty value MAY be used to clear the global definition. Value MUST be as described under <a href="#mimeTypes">Mime Types</a>.</td>
+</tr>
+<tr>
+<td><a name="operationParameters"></a>parameters</td>
+<td style="text-align:center">[<a href="#parameterObject">Parameter Object</a> <span>&#124;</span> <a href="#referenceObject">Reference Object</a>]</td>
+<td>A list of parameters that are applicable for this operation. If a parameter is already defined at the <a href="#pathItemParameters">Path Item</a>, the new definition will override it, but can never remove it. The list MUST NOT include duplicated parameters. A unique parameter is defined by a combination of a <a href="#parameterName">name</a> and <a href="#parameterIn">location</a>. The list can use the <a href="#referenceObject">Reference Object</a> to link to parameters that are defined at the <a href="#swaggerParameters">Swagger Object&#39;s parameters</a>. There can be one &quot;body&quot; parameter at most.</td>
+</tr>
+<tr>
+<td><a name="operationResponses"></a>responses</td>
+<td style="text-align:center"><a href="#responsesObject">Responses Object</a></td>
+<td><strong>Required.</strong> The list of possible responses as they are returned from executing this operation.</td>
+</tr>
+<tr>
+<td><a name="operationSchemes"></a>schemes</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>The transfer protocol for the operation. Values MUST be from the list: <code>&quot;http&quot;</code>, <code>&quot;https&quot;</code>, <code>&quot;ws&quot;</code>, <code>&quot;wss&quot;</code>. The value overrides the Swagger Object <a href="#swaggerSchemes"><code>schemes</code></a> definition. </td>
+</tr>
+<tr>
+<td><a name="operationDeprecated"></a>deprecated</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>Declares this operation to be deprecated. Usage of the declared operation should be refrained. Default value is <code>false</code>.</td>
+</tr>
+<tr>
+<td><a name="operationSecurity"></a>security</td>
+<td style="text-align:center">[<a href="#securityRequirementObject">Security Requirement Object</a>]</td>
+<td>A declaration of which security schemes are applied for this operation. The list of values describes alternative security schemes that can be used (that is, there is a logical OR between the security requirements). This definition overrides any declared top-level <a href="#swaggerSecurity"><code>security</code></a>. To remove a top-level security declaration, an empty array can be used.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="operationExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="operation-object-example">Operation Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;tags&quot;: [
+    &quot;pet&quot;
+  ],
+  &quot;summary&quot;: &quot;Updates a pet in the store with form data&quot;,
+  &quot;description&quot;: &quot;&quot;,
+  &quot;operationId&quot;: &quot;updatePetWithForm&quot;,
+  &quot;consumes&quot;: [
+    &quot;application/x-www-form-urlencoded&quot;
+  ],
+  &quot;produces&quot;: [
+    &quot;application/json&quot;,
+    &quot;application/xml&quot;
+  ],
+  &quot;parameters&quot;: [
+    {
+      &quot;name&quot;: &quot;petId&quot;,
+      &quot;in&quot;: &quot;path&quot;,
+      &quot;description&quot;: &quot;ID of pet that needs to be updated&quot;,
+      &quot;required&quot;: true,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    {
+      &quot;name&quot;: &quot;name&quot;,
+      &quot;in&quot;: &quot;formData&quot;,
+      &quot;description&quot;: &quot;Updated name of the pet&quot;,
+      &quot;required&quot;: false,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    {
+      &quot;name&quot;: &quot;status&quot;,
+      &quot;in&quot;: &quot;formData&quot;,
+      &quot;description&quot;: &quot;Updated status of the pet&quot;,
+      &quot;required&quot;: false,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;responses&quot;: {
+    &quot;200&quot;: {
+      &quot;description&quot;: &quot;Pet updated.&quot;
+    },
+    &quot;405&quot;: {
+      &quot;description&quot;: &quot;Invalid input&quot;
+    }
+  },
+  &quot;security&quot;: [
+    {
+      &quot;petstore_auth&quot;: [
+        &quot;write:pets&quot;,
+        &quot;read:pets&quot;
+      ]
+    }
+  ]
+}
+</code></pre>
+<pre><code class="lang-yaml">tags:
+- pet
+summary: Updates a pet in the store with form data
+description: &quot;&quot;
+operationId: updatePetWithForm
+consumes:
+- application/x-www-form-urlencoded
+produces:
+- application/json
+- application/xml
+parameters:
+- name: petId
+  in: path
+  description: ID of pet that needs to be updated
+  required: true
+  type: string
+- name: name
+  in: formData
+  description: Updated name of the pet
+  required: false
+  type: string
+- name: status
+  in: formData
+  description: Updated status of the pet
+  required: false
+  type: string
+responses:
+  200:
+    description: Pet updated.
+  405:
+    description: Invalid input
+security:
+- petstore_auth:
+  - write:pets
+  - read:pets
+</code></pre>
+<h4 id="-a-name-externaldocumentationobject-a-external-documentation-object"><a name="externalDocumentationObject"></a>External Documentation Object</h4>
+<p>Allows referencing an external resource for extended documentation.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="externalDocDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A short description of the target documentation. <a href="https://help.github.com/articles/github-flavored-markdown">GFM syntax</a> can be used for rich text representation.</td>
+</tr>
+<tr>
+<td><a name="externalDocUrl"></a>url</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The URL for the target documentation. Value MUST be in the format of a URL.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="externalDocExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="external-documentation-object-example">External Documentation Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;description&quot;: &quot;Find more info here&quot;,
+  &quot;url&quot;: &quot;https://swagger.io&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">description: Find more info here
+url: https://swagger.io
+</code></pre>
+<h4 id="-a-name-parameterobject-a-parameter-object"><a name="parameterObject"></a>Parameter Object</h4>
+<p>Describes a single operation parameter.</p>
+<p>A unique parameter is defined by a combination of a <a href="#parameterName">name</a> and <a href="#parameterIn">location</a>.</p>
+<p>There are five possible parameter types.</p>
+<ul>
+<li>Path - Used together with <a href="#pathTemplating">Path Templating</a>, where the parameter value is actually part of the operation&#39;s URL. This does not include the host or base path of the API. For example, in <code>/items/{itemId}</code>, the path parameter is <code>itemId</code>.</li>
+<li>Query - Parameters that are appended to the URL. For example, in <code>/items?id=###</code>, the query parameter is <code>id</code>.</li>
+<li>Header - Custom headers that are expected as part of the request.</li>
+<li>Body - The payload that&#39;s appended to the HTTP request. Since there can only be one payload, there can only be <em>one</em> body parameter. The name of the body parameter has no effect on the parameter itself and is used for documentation purposes only. Since Form parameters are also in the payload, body and form parameters cannot exist together for the same operation.</li>
+<li>Form - Used to describe the payload of an HTTP request when either <code>application/x-www-form-urlencoded</code> or <code>multipart/form-data</code> are used as the content type of the request (in Swagger&#39;s definition, the <a href="#operationConsumes"><code>consumes</code></a> property of an operation). This is the only parameter type that can be used to send files, thus supporting the <code>file</code> type. Since form parameters are sent in the payload, they cannot be declared together with a body parameter for the same operation. Form parameters have a different format based on the content-type used (for further details, consult <a href="http://www.w3.org/TR/html401/interact/forms.html#h-17.13.4">http://www.w3.org/TR/html401/interact/forms.html#h-17.13.4</a>):<ul>
+<li><code>application/x-www-form-urlencoded</code> - Similar to the format of Query parameters but as a payload. For example, <code>foo=1&amp;bar=swagger</code> - both <code>foo</code> and <code>bar</code> are form parameters. This is normally used for simple parameters that are being transferred.</li>
+<li><code>multipart/form-data</code> - each parameter takes a section in the payload with an internal header. For example, for the header <code>Content-Disposition: form-data; name=&quot;submit-name&quot;</code> the name of the parameter is <code>submit-name</code>. This type of form parameters is more commonly used for file transfers.</li>
+</ul>
+</li>
+</ul>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="parameterName"></a>name</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The name of the parameter. Parameter names are <em>case sensitive</em>. <ul><li>If <a href="#parameterIn"><code>in</code></a> is <code>&quot;path&quot;</code>, the <code>name</code> field MUST correspond to the associated path segment from the <a href="#pathsPath">path</a> field in the <a href="#pathsObject">Paths Object</a>. See <a href="#pathTemplating">Path Templating</a> for further information.<li>For all other cases, the <code>name</code> corresponds to the parameter name used based on the <a href="#parameterIn"><code>in</code></a> property.</ul></td>
+</tr>
+<tr>
+<td><a name="parameterIn"></a>in</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The location of the parameter. Possible values are &quot;query&quot;, &quot;header&quot;, &quot;path&quot;, &quot;formData&quot; or &quot;body&quot;.</td>
+</tr>
+<tr>
+<td><a name="parameterDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A brief description of the parameter. This could contain examples of use.  <a href="https://help.github.com/articles/github-flavored-markdown">GFM syntax</a> can be used for rich text representation.</td>
+</tr>
+<tr>
+<td><a name="parameterRequired"></a>required</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>Determines whether this parameter is mandatory. If the parameter is <a href="#parameterIn"><code>in</code></a> &quot;path&quot;, this property is <strong>required</strong> and its value MUST be <code>true</code>. Otherwise, the property MAY be included and its default value is <code>false</code>. </td>
+</tr>
+</tbody>
+</table>
+<p>If <a href="#parameterIn"><code>in</code></a> is <code>&quot;body&quot;</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="parameterSchema"></a>schema</td>
+<td style="text-align:center"><a href="#schemaObject">Schema Object</a></td>
+<td><strong>Required.</strong> The schema defining the type used for the body parameter.</td>
+</tr>
+</tbody>
+</table>
+<p>If <a href="#parameterIn"><code>in</code></a> is any value other than <code>&quot;body&quot;</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="parameterType"></a>type</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The type of the parameter. Since the parameter is not located at the request body, it is limited to simple types (that is, not an object). The value MUST be one of <code>&quot;string&quot;</code>, <code>&quot;number&quot;</code>, <code>&quot;integer&quot;</code>, <code>&quot;boolean&quot;</code>, <code>&quot;array&quot;</code> or <code>&quot;file&quot;</code>. If <code>type</code> is <code>&quot;file&quot;</code>, the <a href="#operationConsumes"><code>consumes</code></a> MUST be either <code>&quot;multipart/form-data&quot;</code> or <code>&quot; application/x-www-form-urlencoded&quot;</code> and the parameter MUST be <a href="#parameterIn"><code>in</code></a> <code>&quot;formData&quot;</code>.</td>
+</tr>
+<tr>
+<td><a name="parameterFormat"></a>format</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The extending format for the previously mentioned <a href="#parameterType"><code>type</code></a>. See <a href="#dataTypeFormat">Data Type Formats</a> for further details.</td>
+</tr>
+<tr>
+<td><a name="parameterAllowEmptyValue"/>allowEmptyValue</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>Sets the ability to pass empty-valued parameters. This is valid only for either <code>query</code> or <code>formData</code> parameters and allows you to send a parameter with a name only or  an empty value. Default value is <code>false</code>.</td>
+</tr>
+<tr>
+<td><a name="parameterItems"></a>items</td>
+<td style="text-align:center"><a href="#itemsObject">Items Object</a></td>
+<td><strong>Required if <a href="#parameterType"><code>type</code></a> is &quot;array&quot;.</strong> Describes the type of items in the array.</td>
+</tr>
+<tr>
+<td><a name="parameterCollectionFormat"></a>collectionFormat</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Determines the format of the array if type array is used. Possible values are: <ul><li><code>csv</code> - comma separated values <code>foo,bar</code>. <li><code>ssv</code> - space separated values <code>foo bar</code>. <li><code>tsv</code> - tab separated values <code>foo\tbar</code>. <li><code>pipes</code> - pipe separated values <code>foo&#124;bar</code>. <li><code>multi</code> - corresponds to multiple parameter instances instead of multiple values for a single instance <code>foo=bar&amp;foo=baz</code>. This is valid only for parameters <a href="#parameterIn"><code>in</code></a> &quot;query&quot; or &quot;formData&quot;. </ul> Default value is <code>csv</code>.</td>
+</tr>
+<tr>
+<td><a name="parameterDefault"></a>default</td>
+<td style="text-align:center">*</td>
+<td>Declares the value of the parameter that the server will use if none is provided, for example a &quot;count&quot; to control the number of results per page might default to 100 if not supplied by the client in the request. (Note: &quot;default&quot; has no meaning for required parameters.)  See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor101">http://json-schema.org/latest/json-schema-validation.html#anchor101</a>. Unlike JSON Schema this value MUST conform to the defined <a href="#parameterType"><code>type</code></a> for this parameter.</td>
+</tr>
+<tr>
+<td><a name="parameterMaximum"></a>maximum</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor17">http://json-schema.org/latest/json-schema-validation.html#anchor17</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterExclusiveMaximum"></a>exclusiveMaximum</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor17">http://json-schema.org/latest/json-schema-validation.html#anchor17</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterMinimum"></a>minimum</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor21">http://json-schema.org/latest/json-schema-validation.html#anchor21</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterExclusiveMinimum"></a>exclusiveMinimum</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor21">http://json-schema.org/latest/json-schema-validation.html#anchor21</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterMaxLength"></a>maxLength</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor26">http://json-schema.org/latest/json-schema-validation.html#anchor26</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterMinLength"></a>minLength</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor29">http://json-schema.org/latest/json-schema-validation.html#anchor29</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterPattern"></a>pattern</td>
+<td style="text-align:center"><code>string</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor33">http://json-schema.org/latest/json-schema-validation.html#anchor33</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterMaxItems"></a>maxItems</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor42">http://json-schema.org/latest/json-schema-validation.html#anchor42</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterMinItems"></a>minItems</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor45">http://json-schema.org/latest/json-schema-validation.html#anchor45</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterUniqueItems"></a>uniqueItems</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor49">http://json-schema.org/latest/json-schema-validation.html#anchor49</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterEnum"></a>enum</td>
+<td style="text-align:center">[*]</td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor76">http://json-schema.org/latest/json-schema-validation.html#anchor76</a>.</td>
+</tr>
+<tr>
+<td><a name="parameterMultipleOf"></a>multipleOf</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor14">http://json-schema.org/latest/json-schema-validation.html#anchor14</a>.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="parameterExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="parameter-object-examples">Parameter Object Examples</h5>
+<h6 id="body-parameters">Body Parameters</h6>
+<p>A body parameter with a referenced schema definition (normally for a model definition):</p>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;user&quot;,
+  &quot;in&quot;: &quot;body&quot;,
+  &quot;description&quot;: &quot;user to add to the system&quot;,
+  &quot;required&quot;: true,
+  &quot;schema&quot;: {
+    &quot;$ref&quot;: &quot;#/definitions/User&quot;
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">name: user
+in: body
+description: user to add to the system
+required: true
+schema:
+  $ref: &#39;#/definitions/User&#39;
+</code></pre>
+<p>A body parameter that is an array of string values:</p>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;user&quot;,
+  &quot;in&quot;: &quot;body&quot;,
+  &quot;description&quot;: &quot;user to add to the system&quot;,
+  &quot;required&quot;: true,
+  &quot;schema&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">name: user
+in: body
+description: user to add to the system
+required: true
+schema:
+  type: array
+  items:
+    type: string
+</code></pre>
+<h6 id="other-parameters">Other Parameters</h6>
+<p>A header parameter with an array of 64 bit integer numbers:</p>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;token&quot;,
+  &quot;in&quot;: &quot;header&quot;,
+  &quot;description&quot;: &quot;token to be passed as a header&quot;,
+  &quot;required&quot;: true,
+  &quot;type&quot;: &quot;array&quot;,
+  &quot;items&quot;: {
+    &quot;type&quot;: &quot;integer&quot;,
+    &quot;format&quot;: &quot;int64&quot;
+  },
+  &quot;collectionFormat&quot;: &quot;csv&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">name: token
+in: header
+description: token to be passed as a header
+required: true
+type: array
+items:
+  type: integer
+  format: int64
+collectionFormat: csv
+</code></pre>
+<p>A path parameter of a string value:</p>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;username&quot;,
+  &quot;in&quot;: &quot;path&quot;,
+  &quot;description&quot;: &quot;username to fetch&quot;,
+  &quot;required&quot;: true,
+  &quot;type&quot;: &quot;string&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">name: username
+in: path
+description: username to fetch
+required: true
+type: string
+</code></pre>
+<p>An optional query parameter of a string value, allowing multiple values by repeating the query parameter:</p>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;id&quot;,
+  &quot;in&quot;: &quot;query&quot;,
+  &quot;description&quot;: &quot;ID of the object to fetch&quot;,
+  &quot;required&quot;: false,
+  &quot;type&quot;: &quot;array&quot;,
+  &quot;items&quot;: {
+    &quot;type&quot;: &quot;string&quot;
+  },
+  &quot;collectionFormat&quot;: &quot;multi&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">name: id
+in: query
+description: ID of the object to fetch
+required: false
+type: array
+items:
+  type: string
+collectionFormat: multi
+</code></pre>
+<p>A form data with file type for a file upload:</p>
+<pre><code class="lang-js">{
+  &quot;name&quot;: &quot;avatar&quot;,
+  &quot;in&quot;: &quot;formData&quot;,
+  &quot;description&quot;: &quot;The avatar of the user&quot;,
+  &quot;required&quot;: true,
+  &quot;type&quot;: &quot;file&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">name: avatar
+in: formData
+description: The avatar of the user
+required: true
+type: file
+</code></pre>
+<h4 id="-a-name-itemsobject-a-items-object"><a name="itemsObject"></a>Items Object</h4>
+<p>An limited subset of JSON-Schema&#39;s items object. It is used by parameter definitions that are not located <a href="#parameterIn"><code>in</code></a> <code>&quot;body&quot;</code>.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="itemsType"></a>type</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The internal type of the array. The value MUST be one of <code>&quot;string&quot;</code>, <code>&quot;number&quot;</code>, <code>&quot;integer&quot;</code>, <code>&quot;boolean&quot;</code>, or <code>&quot;array&quot;</code>. Files and models are not allowed.</td>
+</tr>
+<tr>
+<td><a name="itemsFormat"></a>format</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The extending format for the previously mentioned <a href="#parameterType"><code>type</code></a>. See <a href="#dataTypeFormat">Data Type Formats</a> for further details.</td>
+</tr>
+<tr>
+<td><a name="itemsItems"></a>items</td>
+<td style="text-align:center"><a href="#itemsObject">Items Object</a></td>
+<td><strong>Required if <a href="#itemsType"><code>type</code></a> is &quot;array&quot;.</strong> Describes the type of items in the array.</td>
+</tr>
+<tr>
+<td><a name="itemsCollectionFormat"></a>collectionFormat</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Determines the format of the array if type array is used. Possible values are: <ul><li><code>csv</code> - comma separated values <code>foo,bar</code>. <li><code>ssv</code> - space separated values <code>foo bar</code>. <li><code>tsv</code> - tab separated values <code>foo\tbar</code>. <li><code>pipes</code> - pipe separated values <code>foo&#124;bar</code>. </ul> Default value is <code>csv</code>.</td>
+</tr>
+<tr>
+<td><a name="itemsDefault"></a>default</td>
+<td style="text-align:center">*</td>
+<td>Declares the value of the item that the server will use if none is provided. (Note: &quot;default&quot; has no meaning for required items.) See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor101">http://json-schema.org/latest/json-schema-validation.html#anchor101</a>. Unlike JSON Schema this value MUST conform to the defined <a href="#itemsType"><code>type</code></a> for the data type.</td>
+</tr>
+<tr>
+<td><a name="itemsMaximum"></a>maximum</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor17">http://json-schema.org/latest/json-schema-validation.html#anchor17</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsMaximum"></a>exclusiveMaximum</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor17">http://json-schema.org/latest/json-schema-validation.html#anchor17</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsMinimum"></a>minimum</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor21">http://json-schema.org/latest/json-schema-validation.html#anchor21</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsExclusiveMinimum"></a>exclusiveMinimum</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor21">http://json-schema.org/latest/json-schema-validation.html#anchor21</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsMaxLength"></a>maxLength</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor26">http://json-schema.org/latest/json-schema-validation.html#anchor26</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsMinLength"></a>minLength</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor29">http://json-schema.org/latest/json-schema-validation.html#anchor29</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsPattern"></a>pattern</td>
+<td style="text-align:center"><code>string</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor33">http://json-schema.org/latest/json-schema-validation.html#anchor33</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsMaxItems"></a>maxItems</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor42">http://json-schema.org/latest/json-schema-validation.html#anchor42</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsMinItems"></a>minItems</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor45">http://json-schema.org/latest/json-schema-validation.html#anchor45</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsUniqueItems"></a>uniqueItems</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor49">http://json-schema.org/latest/json-schema-validation.html#anchor49</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsEnum"></a>enum</td>
+<td style="text-align:center">[*]</td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor76">http://json-schema.org/latest/json-schema-validation.html#anchor76</a>.</td>
+</tr>
+<tr>
+<td><a name="itemsMultipleOf"></a>multipleOf</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor14">http://json-schema.org/latest/json-schema-validation.html#anchor14</a>.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="itemsExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="items-object-examples">Items Object Examples</h5>
+<p>Items must be of type  string and have the minimum length of  2 characters:</p>
+<pre><code class="lang-js">{
+    &quot;type&quot;: &quot;string&quot;,
+    &quot;minLength&quot;: 2
+}
+</code></pre>
+<pre><code class="lang-yaml">type: string
+minLength: 2
+</code></pre>
+<p>An array of arrays, the internal array being of type integer, numbers must be between 0 and 63 (inclusive):</p>
+<pre><code class="lang-js">{
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;maximum&quot;: 63
+    }
+}
+</code></pre>
+<pre><code class="lang-yaml">type: array
+items:
+  type: integer
+  minimum: 0
+  maximum: 63
+</code></pre>
+<h4 id="-a-name-responsesobject-a-responses-object"><a name="responsesObject"></a>Responses Object</h4>
+<p>A container for the expected responses of an operation. The container maps a HTTP response code to the expected response. It is not expected from the documentation to necessarily cover all possible HTTP response codes, since they may not be known in advance. However, it is expected from the documentation to cover a successful operation response and any known errors.</p>
+<p>The <code>default</code> can be used a default response object for all HTTP codes that are not covered individually by the specification.</p>
+<p>The <code>Responses Object</code> MUST contain at least one response code, and it SHOULD be the response for a successful operation call.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="responsesDefault"></a>default</td>
+<td style="text-align:center"><a href="#responseObject">Response Object</a> <span>&#124;</span> <a href="#referenceObject">Reference Object</a></td>
+<td>The documentation of responses other than the ones declared for specific HTTP response codes. It can be used to cover undeclared responses. <a href="#referenceObject">Reference Object</a> can be used to link to a response that is defined at the <a href="#swaggerResponses">Swagger Object&#39;s responses</a> section.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="responsesCode"></a>{<a href="#httpCodes">HTTP Status Code</a>}</td>
+<td style="text-align:center"><a href="#responseObject">Response Object</a> <span>&#124;</span> <a href="#referenceObject">Reference Object</a></td>
+<td>Any <a href="#httpCodes">HTTP status code</a> can be used as the property name (one property per HTTP status code). Describes the expected response for that HTTP status code.  <a href="#referenceObject">Reference Object</a> can be used to link to a response that is defined at the <a href="#swaggerResponses">Swagger Object&#39;s responses</a> section.</td>
+</tr>
+<tr>
+<td><a name="responsesExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="responses-object-example">Responses Object Example</h5>
+<p>A 200 response for successful operation and a default response for others (implying an error):</p>
+<pre><code class="lang-js">{
+  &quot;200&quot;: {
+    &quot;description&quot;: &quot;a pet to be returned&quot;,
+    &quot;schema&quot;: {
+      &quot;$ref&quot;: &quot;#/definitions/Pet&quot;
+    }
+  },
+  &quot;default&quot;: {
+    &quot;description&quot;: &quot;Unexpected error&quot;,
+    &quot;schema&quot;: {
+      &quot;$ref&quot;: &quot;#/definitions/ErrorModel&quot;
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">200:
+  description: a pet to be returned
+  schema:
+    $ref: &#39;#/definitions/Pet&#39;
+default:
+  description: Unexpected error
+  schema:
+    $ref: &#39;#/definitions/ErrorModel&#39;
+</code></pre>
+<h4 id="-a-name-responseobject-a-response-object"><a name="responseObject"></a>Response Object</h4>
+<p>Describes a single response from an API Operation.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="responseDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> A short description of the response. <a href="https://help.github.com/articles/github-flavored-markdown">GFM syntax</a> can be used for rich text representation.</td>
+</tr>
+<tr>
+<td><a name="responseSchema"></a>schema</td>
+<td style="text-align:center"><a href="#schemaObject">Schema Object</a></td>
+<td>A definition of the response structure. It can be a primitive, an array or an object. If this field does not exist, it means no content is returned as part of the response. As an extension to the <a href="#schemaObject">Schema Object</a>, its root <code>type</code> value may also be <code>&quot;file&quot;</code>. This SHOULD be accompanied by a relevant <code>produces</code> mime-type.</td>
+</tr>
+<tr>
+<td><a name="responseHeaders"></a>headers</td>
+<td style="text-align:center"><a href="#headersObject">Headers Object</a></td>
+<td>A list of headers that are sent with the response.</td>
+</tr>
+<tr>
+<td><a name="responseExamples"></a>examples</td>
+<td style="text-align:center"><a href="#exampleObject">Example Object</a></td>
+<td>An example of the response message.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="responseExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="response-object-examples">Response Object Examples</h5>
+<p>Response of an array of a complex type:</p>
+<pre><code class="lang-js">{
+  &quot;description&quot;: &quot;A complex object array response&quot;,
+  &quot;schema&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;$ref&quot;: &quot;#/definitions/VeryComplexType&quot;
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">description: A complex object array response
+schema:
+  type: array
+  items:
+    $ref: &#39;#/definitions/VeryComplexType&#39;
+</code></pre>
+<p>Response with a string type:</p>
+<pre><code class="lang-js">{
+  &quot;description&quot;: &quot;A simple string response&quot;,
+  &quot;schema&quot;: {
+    &quot;type&quot;: &quot;string&quot;
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">description: A simple string response
+schema:
+  type: string
+</code></pre>
+<p>Response with headers:</p>
+<pre><code class="lang-js">{
+  &quot;description&quot;: &quot;A simple string response&quot;,
+  &quot;schema&quot;: {
+    &quot;type&quot;: &quot;string&quot;
+  },
+  &quot;headers&quot;: {
+    &quot;X-Rate-Limit-Limit&quot;: {
+      &quot;description&quot;: &quot;The number of allowed requests in the current period&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;X-Rate-Limit-Remaining&quot;: {
+      &quot;description&quot;: &quot;The number of remaining requests in the current period&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;X-Rate-Limit-Reset&quot;: {
+      &quot;description&quot;: &quot;The number of seconds left in the current period&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">description: A simple string response
+schema:
+  type: string
+headers:
+  X-Rate-Limit-Limit:
+    description: The number of allowed requests in the current period
+    type: integer
+  X-Rate-Limit-Remaining:
+    description: The number of remaining requests in the current period
+    type: integer
+  X-Rate-Limit-Reset:
+    description: The number of seconds left in the current period
+    type: integer
+</code></pre>
+<p>Response with no return value:</p>
+<pre><code class="lang-js">{
+  &quot;description&quot;: &quot;object created&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">description: object created
+</code></pre>
+<h4 id="-a-name-headersobject-a-headers-object"><a name="headersObject"></a>Headers Object</h4>
+<p>Lists the headers that can be sent as part of a response.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="headersName"></a>{name}</td>
+<td style="text-align:center"><a href="#headerObject">Header Object</a></td>
+<td>The name of the property corresponds to the name of the header. The value describes the type of the header.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="headers-object-example">Headers Object Example</h5>
+<p>Rate-limit headers:</p>
+<pre><code class="lang-js">{
+    &quot;X-Rate-Limit-Limit&quot;: {
+        &quot;description&quot;: &quot;The number of allowed requests in the current period&quot;,
+        &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;X-Rate-Limit-Remaining&quot;: {
+        &quot;description&quot;: &quot;The number of remaining requests in the current period&quot;,
+        &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;X-Rate-Limit-Reset&quot;: {
+        &quot;description&quot;: &quot;The number of seconds left in the current period&quot;,
+        &quot;type&quot;: &quot;integer&quot;
+    }
+}
+</code></pre>
+<pre><code class="lang-yaml">X-Rate-Limit-Limit:
+  description: The number of allowed requests in the current period
+  type: integer
+X-Rate-Limit-Remaining:
+  description: The number of remaining requests in the current period
+  type: integer
+X-Rate-Limit-Reset:
+  description: The number of seconds left in the current period
+  type: integer
+</code></pre>
+<h4 id="-a-name-exampleobject-a-example-object"><a name="exampleObject"></a>Example Object</h4>
+<p>Allows sharing examples for operation responses.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="exampleMimeType"></a>{<a href="#mimeTypes">mime type</a>}</td>
+<td style="text-align:center">Any</td>
+<td>The name of the property MUST be one of the Operation <code>produces</code> values (either implicit or inherited). The value SHOULD be an example of what such a response would look like. </td>
+</tr>
+</tbody>
+</table>
+<h5 id="example-object-example">Example Object Example</h5>
+<p>Example response for application/json mimetype of a Pet data type:</p>
+<pre><code class="lang-js">{
+  &quot;application/json&quot;: {
+    &quot;name&quot;: &quot;Puma&quot;,
+    &quot;type&quot;: &quot;Dog&quot;,
+    &quot;color&quot;: &quot;Black&quot;,
+    &quot;gender&quot;: &quot;Female&quot;,
+    &quot;breed&quot;: &quot;Mixed&quot;
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">application/json:
+  name: Puma
+  type: Dog
+  color: Black
+  gender: Female
+  breed: Mixed
+</code></pre>
+<h4 id="-a-name-headerobject-a-header-object"><a name="headerObject"></a>Header Object</h4>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="headerDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A short description of the header.</td>
+</tr>
+<tr>
+<td><a name="headerType"></a>type</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The type of the object. The value MUST be one of <code>&quot;string&quot;</code>, <code>&quot;number&quot;</code>, <code>&quot;integer&quot;</code>, <code>&quot;boolean&quot;</code>, or <code>&quot;array&quot;</code>.</td>
+</tr>
+<tr>
+<td><a name="headerFormat"></a>format</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The extending format for the previously mentioned <a href="#stType"><code>type</code></a>. See <a href="#dataTypeFormat">Data Type Formats</a> for further details.</td>
+</tr>
+<tr>
+<td><a name="headerItems"></a>items</td>
+<td style="text-align:center"><a href="#itemsObject">Items Object</a></td>
+<td><strong>Required if <a href="#stType"><code>type</code></a> is &quot;array&quot;.</strong> Describes the type of items in the array.</td>
+</tr>
+<tr>
+<td><a name="headerCollectionFormat"></a>collectionFormat</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Determines the format of the array if type array is used. Possible values are: <ul><li><code>csv</code> - comma separated values <code>foo,bar</code>. <li><code>ssv</code> - space separated values <code>foo bar</code>. <li><code>tsv</code> - tab separated values <code>foo\tbar</code>. <li><code>pipes</code> - pipe separated values <code>foo&#124;bar</code>. </ul> Default value is <code>csv</code>.</td>
+</tr>
+<tr>
+<td><a name="headerDefault"></a>default</td>
+<td style="text-align:center">*</td>
+<td>Declares the value of the header that the server will use if none is provided. (Note: &quot;default&quot; has no meaning for required headers.) See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor101">http://json-schema.org/latest/json-schema-validation.html#anchor101</a>. Unlike JSON Schema this value MUST conform to the defined <a href="#headerDefault"><code>type</code></a> for the header.</td>
+</tr>
+<tr>
+<td><a name="headerMaximum"></a>maximum</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor17">http://json-schema.org/latest/json-schema-validation.html#anchor17</a>.</td>
+</tr>
+<tr>
+<td><a name="headerMaximum"></a>exclusiveMaximum</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor17">http://json-schema.org/latest/json-schema-validation.html#anchor17</a>.</td>
+</tr>
+<tr>
+<td><a name="headerMinimum"></a>minimum</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor21">http://json-schema.org/latest/json-schema-validation.html#anchor21</a>.</td>
+</tr>
+<tr>
+<td><a name="headerExclusiveMinimum"></a>exclusiveMinimum</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor21">http://json-schema.org/latest/json-schema-validation.html#anchor21</a>.</td>
+</tr>
+<tr>
+<td><a name="headerMaxLength"></a>maxLength</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor26">http://json-schema.org/latest/json-schema-validation.html#anchor26</a>.</td>
+</tr>
+<tr>
+<td><a name="headerMinLength"></a>minLength</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor29">http://json-schema.org/latest/json-schema-validation.html#anchor29</a>.</td>
+</tr>
+<tr>
+<td><a name="headerPattern"></a>pattern</td>
+<td style="text-align:center"><code>string</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor33">http://json-schema.org/latest/json-schema-validation.html#anchor33</a>.</td>
+</tr>
+<tr>
+<td><a name="headerMaxItems"></a>maxItems</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor42">http://json-schema.org/latest/json-schema-validation.html#anchor42</a>.</td>
+</tr>
+<tr>
+<td><a name="headerMinItems"></a>minItems</td>
+<td style="text-align:center"><code>integer</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor45">http://json-schema.org/latest/json-schema-validation.html#anchor45</a>.</td>
+</tr>
+<tr>
+<td><a name="headerUniqueItems"></a>uniqueItems</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor49">http://json-schema.org/latest/json-schema-validation.html#anchor49</a>.</td>
+</tr>
+<tr>
+<td><a name="headerEnum"></a>enum</td>
+<td style="text-align:center">[*]</td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor76">http://json-schema.org/latest/json-schema-validation.html#anchor76</a>.</td>
+</tr>
+<tr>
+<td><a name="headerMultipleOf"></a>multipleOf</td>
+<td style="text-align:center"><code>number</code></td>
+<td>See <a href="http://json-schema.org/latest/json-schema-validation.html#anchor14">http://json-schema.org/latest/json-schema-validation.html#anchor14</a>.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="headerExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="header-object-example">Header Object Example</h5>
+<p>A simple header with of an integer type:</p>
+<pre><code class="lang-js">{
+  &quot;description&quot;: &quot;The number of allowed requests in the current period&quot;,
+  &quot;type&quot;: &quot;integer&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">description: The number of allowed requests in the current period
+type: integer
+</code></pre>
+<h4 id="-a-name-tagobject-a-tag-object"><a name="tagObject"></a>Tag Object</h4>
+<p>Allows adding meta data to a single tag that is used by the <a href="#operationObject">Operation Object</a>. It is not mandatory to have a Tag Object per tag used there.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="tagName"></a>name</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The name of the tag.</td>
+</tr>
+<tr>
+<td><a name="tagDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td>A short description for the tag. <a href="https://help.github.com/articles/github-flavored-markdown">GFM syntax</a> can be used for rich text representation.</td>
+</tr>
+<tr>
+<td><a name="tagExternalDocs"></a>externalDocs</td>
+<td style="text-align:center"><a href="#externalDocumentationObject">External Documentation Object</a></td>
+<td>Additional external documentation for this tag.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="tagExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="tag-object-example">Tag Object Example</h5>
+<pre><code class="lang-js">{
+    &quot;name&quot;: &quot;pet&quot;,
+    &quot;description&quot;: &quot;Pets operations&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">name: pet
+description: Pets operations
+</code></pre>
+<h4 id="-a-name-referenceobject-a-reference-object"><a name="referenceObject"></a>Reference Object</h4>
+<p>A simple object to allow referencing other definitions in the specification. It can be used to reference parameters and responses that are defined at the top level for reuse.</p>
+<p>The Reference Object is a <a href="http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-02">JSON Reference</a> that uses a <a href="http://tools.ietf.org/html/rfc6901">JSON Pointer</a> as its value. For this specification, only <a href="http://json-schema.org/latest/json-schema-core.html#anchor27">canonical dereferencing</a> is supported.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="referenceRef"></a>$ref</td>
+<td style="text-align:center"><code>string</code></td>
+<td><strong>Required.</strong> The reference string. </td>
+</tr>
+</tbody>
+</table>
+<h5 id="reference-object-example">Reference Object Example</h5>
+<pre><code class="lang-js">{
+    &quot;$ref&quot;: &quot;#/definitions/Pet&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">$ref: &#39;#/definitions/Pet&#39;
+</code></pre>
+<h5 id="relative-schema-file-example">Relative Schema File Example</h5>
+<pre><code class="lang-js">{
+  &quot;$ref&quot;: &quot;Pet.json&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">$ref: &#39;Pet.yaml&#39;
+</code></pre>
+<h5 id="relative-files-with-embedded-schema-example">Relative Files With Embedded Schema Example</h5>
+<pre><code class="lang-js">{
+  &quot;$ref&quot;: &quot;definitions.json#/Pet&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">$ref: &#39;definitions.yaml#/Pet&#39;
+</code></pre>
+<h4 id="-a-name-schemaobject-a-schema-object"><a name="schemaObject"></a>Schema Object</h4>
+<p>The Schema Object allows the definition of input and output data types. These types can be objects, but also primitives and arrays. This object is based on the <a href="http://json-schema.org/">JSON Schema Specification Draft 4</a> and uses a predefined subset of it. On top of this subset, there are extensions provided by this specification to allow for more complete documentation.</p>
+<p>Further information about the properties can be found in <a href="http://json-schema.org/latest/json-schema-core.html">JSON Schema Core</a> and <a href="http://json-schema.org/latest/json-schema-validation.html">JSON Schema Validation</a>. Unless stated otherwise, the property definitions follow the JSON Schema specification as referenced here.</p>
+<p>The following properties are taken directly from the JSON Schema definition and follow the same specifications:</p>
+<ul>
+<li>$ref - As a <a href="https://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03">JSON Reference</a></li>
+<li>format (See <a href="#dataTypeFormat">Data Type Formats</a> for further details)</li>
+<li>title</li>
+<li>description (<a href="https://help.github.com/articles/github-flavored-markdown">GFM syntax</a> can be used for rich text representation)</li>
+<li>default (Unlike JSON Schema, the value MUST conform to the defined type for the Schema Object)</li>
+<li>multipleOf</li>
+<li>maximum</li>
+<li>exclusiveMaximum</li>
+<li>minimum</li>
+<li>exclusiveMinimum</li>
+<li>maxLength</li>
+<li>minLength</li>
+<li>pattern</li>
+<li>maxItems</li>
+<li>minItems</li>
+<li>uniqueItems</li>
+<li>maxProperties</li>
+<li>minProperties</li>
+<li>required</li>
+<li>enum</li>
+<li>type</li>
+</ul>
+<p>The following properties are taken from the JSON Schema definition but their definitions were adjusted to the Swagger Specification. Their definition is the same as the one from JSON Schema, only where the original definition references the JSON Schema definition, the <a href="#schemaObject">Schema Object</a> definition is used instead.</p>
+<ul>
+<li>items</li>
+<li>allOf</li>
+<li>properties</li>
+<li>additionalProperties</li>
+</ul>
+<p>Other than the JSON Schema subset fields, the following fields may be used for further schema documentation.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="schemaDiscriminator"></a>discriminator</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Adds support for polymorphism. The discriminator is the schema property name that is used to differentiate between other schema that inherit this schema. The property name used MUST be defined at this schema and it MUST be in the <code>required</code> property list. When used, the value MUST be the name of this schema or any schema that inherits it.</td>
+</tr>
+<tr>
+<td><a name="schemaReadOnly"></a>readOnly</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>Relevant only for Schema <code>&quot;properties&quot;</code> definitions. Declares the property as &quot;read only&quot;. This means that it MAY be sent as part of a response but MUST NOT be sent as part of the request. Properties marked as <code>readOnly</code> being <code>true</code> SHOULD NOT be in the <code>required</code> list of the defined schema. Default value is <code>false</code>.</td>
+</tr>
+<tr>
+<td><a name="schemaXml"></a>xml</td>
+<td style="text-align:center"><a href="#xmlObject">XML Object</a></td>
+<td>This MAY be used only on properties schemas. It has no effect on root schemas. Adds Additional metadata to describe the XML representation format of this property.</td>
+</tr>
+<tr>
+<td><a name="schemaExternalDocs"></a>externalDocs</td>
+<td style="text-align:center"><a href="#externalDocumentationObject">External Documentation Object</a></td>
+<td>Additional external documentation for this schema. </td>
+</tr>
+<tr>
+<td><a name="schemaExample"></a>example</td>
+<td style="text-align:center">Any</td>
+<td>A free-form property to include a an example of an instance for this schema.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="schemaExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h6 id="composition-and-inheritance-polymorphism-">Composition and Inheritance (Polymorphism)</h6>
+<p>Swagger allows combining and extending model definitions using the <code>allOf</code> property of JSON Schema, in effect offering model composition. <code>allOf</code> takes in an array of object definitions that are validated <em>independently</em> but together compose a single object. </p>
+<p>While composition offers model extensibility, it does not imply a hierarchy between the models. To support polymorphism, Swagger adds the support of the <code>discriminator</code> field. When used, the <code>discriminator</code> will be the name of the property used to decide which schema definition is used to validate the structure of the model. As such, the <code>discriminator</code> field MUST be a required field. The value of the chosen property has to be the friendly name given to the model under the <code>definitions</code> property. As such, inline schema definitions, which do not have a given id, <em>cannot</em> be used in polymorphism.</p>
+<h6 id="xml-modeling">XML Modeling</h6>
+<p>The <a href="#schemaXml">xml</a> property allows extra definitions when translating the JSON definition to XML. The <a href="#xmlObject">XML Object</a> contains additional information about the available options.</p>
+<h5 id="schema-object-examples">Schema Object Examples</h5>
+<h6 id="primitive-sample">Primitive Sample</h6>
+<p>Unlike previous versions of Swagger, Schema definitions can be used to describe primitive and arrays as well.</p>
+<pre><code class="lang-js">{
+    &quot;type&quot;: &quot;string&quot;,
+    &quot;format&quot;: &quot;email&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">type: string
+format: email
+</code></pre>
+<h6 id="simple-model">Simple Model</h6>
+<pre><code class="lang-js">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;name&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;address&quot;: {
+      &quot;$ref&quot;: &quot;#/definitions/Address&quot;
+    },
+    &quot;age&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;int32&quot;,
+      &quot;minimum&quot;: 0
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">type: object
+required:
+- name
+properties:
+  name:
+    type: string
+  address:
+    $ref: &#39;#/definitions/Address&#39;
+  age:
+    type: integer
+    format: int32
+    minimum: 0
+</code></pre>
+<h6 id="model-with-map-dictionary-properties">Model with Map/Dictionary Properties</h6>
+<p>For a simple string to string mapping:</p>
+<pre><code class="lang-js">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: {
+    &quot;type&quot;: &quot;string&quot;
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">type: object
+additionalProperties:
+  type: string
+</code></pre>
+<p>For a string to model mapping:</p>
+<pre><code class="lang-js">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: {
+    &quot;$ref&quot;: &quot;#/definitions/ComplexModel&quot;
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">type: object
+additionalProperties:
+  $ref: &#39;#/definitions/ComplexModel&#39;
+</code></pre>
+<h6 id="model-with-example">Model with Example</h6>
+<pre><code class="lang-js">{
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;int64&quot;
+    },
+    &quot;name&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;name&quot;
+  ],
+  &quot;example&quot;: {
+    &quot;name&quot;: &quot;Puma&quot;,
+    &quot;id&quot;: 1
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">properties:
+  id:
+    type: integer
+    format: int64
+  name:
+    type: string
+required:
+- name
+example:
+  name: Puma
+  id: 1
+</code></pre>
+<h6 id="models-with-composition">Models with Composition</h6>
+<pre><code class="lang-js">{
+  &quot;definitions&quot;: {
+    &quot;ErrorModel&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;message&quot;,
+        &quot;code&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 100,
+          &quot;maximum&quot;: 600
+        }
+      }
+    },
+    &quot;ExtendedErrorModel&quot;: {
+      &quot;allOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/definitions/ErrorModel&quot;
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;rootCause&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;rootCause&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">definitions:
+  ErrorModel:
+    type: object
+    required:
+    - message
+    - code
+    properties:
+      message:
+        type: string
+      code:
+        type: integer
+        minimum: 100
+        maximum: 600
+  ExtendedErrorModel:
+    allOf:
+    - $ref: &#39;#/definitions/ErrorModel&#39;
+    - type: object
+      required:
+      - rootCause
+      properties:
+        rootCause:
+          type: string
+</code></pre>
+<h6 id="models-with-polymorphism-support">Models with Polymorphism Support</h6>
+<pre><code class="lang-js">{
+  &quot;definitions&quot;: {
+    &quot;Pet&quot;: {
+      &quot;discriminator&quot;: &quot;petType&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;petType&quot;: {
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;petType&quot;
+      ]
+    }
+  },
+  &quot;Cat&quot;: {
+    &quot;description&quot;: &quot;A representation of a cat&quot;,
+    &quot;allOf&quot;: [
+      {
+        &quot;$ref&quot;: &quot;#/definitions/Pet&quot;
+      },
+      {
+        &quot;properties&quot;: {
+          &quot;huntingSkill&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;The measured skill for hunting&quot;,
+            &quot;default&quot;: &quot;lazy&quot;,
+            &quot;enum&quot;: [
+              &quot;clueless&quot;,
+              &quot;lazy&quot;,
+              &quot;adventurous&quot;,
+              &quot;aggressive&quot;
+            ]
+          }
+        },
+        &quot;required&quot;: [
+          &quot;huntingSkill&quot;
+        ]
+      }
+    ]
+  },
+  &quot;Dog&quot;: {
+    &quot;description&quot;: &quot;A representation of a dog&quot;,
+    &quot;allOf&quot;: [
+      {
+        &quot;$ref&quot;: &quot;#/definitions/Pet&quot;
+      },
+      {
+        &quot;properties&quot;: {
+          &quot;packSize&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;format&quot;: &quot;int32&quot;,
+            &quot;description&quot;: &quot;the size of the pack the dog is from&quot;,
+            &quot;default&quot;: 0,
+            &quot;minimum&quot;: 0
+          }
+        },
+        &quot;required&quot;: [
+          &quot;packSize&quot;
+        ]
+      }
+    ]
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">definitions:
+  Pet:
+    discriminator: petType
+    properties:
+      name:
+        type: string
+      petType:
+        type: string
+    required:
+    - name
+    - petType
+Cat:
+  description: A representation of a cat
+  allOf:
+  - $ref: &#39;#/definitions/Pet&#39;
+  - properties:
+      huntingSkill:
+        type: string
+        description: The measured skill for hunting
+        default: lazy
+        enum:
+        - clueless
+        - lazy
+        - adventurous
+        - aggressive
+    required:
+    - huntingSkill
+Dog:
+  description: A representation of a dog
+  allOf:
+  - $ref: &#39;#/definitions/Pet&#39;
+  - properties:
+      packSize:
+        type: integer
+        format: int32
+        description: the size of the pack the dog is from
+        default: 0
+        minimum: 0
+    required:
+    - packSize
+</code></pre>
+<h4 id="-a-name-xmlobject-a-xml-object"><a name="xmlObject"></a>XML Object</h4>
+<p>A metadata object that allows for more fine-tuned XML model definitions.</p>
+<p>When using arrays, XML element names are <em>not</em> inferred (for singular/plural forms) and the <code>name</code> property should be used to add that information. See examples for expected behavior.</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="xmlName"></a>name</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Replaces the name of the element/attribute used for the described schema property. When defined within the Items Object (<code>items</code>), it will affect the name of the individual XML elements within the list. When defined alongside <code>type</code> being <code>array</code> (outside the <code>items</code>), it will affect the wrapping element and only if <code>wrapped</code> is <code>true</code>. If <code>wrapped</code> is <code>false</code>, it will be ignored.</td>
+</tr>
+<tr>
+<td><a name="xmlNamespace"></a>namespace</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The URL of the namespace definition. Value SHOULD be in the form of a URL.</td>
+</tr>
+<tr>
+<td><a name="xmlPrefix"></a>prefix</td>
+<td style="text-align:center"><code>string</code></td>
+<td>The prefix to be used for the <a href="#xmlName">name</a>.</td>
+</tr>
+<tr>
+<td><a name="xmlAttribute"></a>attribute</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>Declares whether the property definition translates to an attribute instead of an element. Default value is <code>false</code>.</td>
+</tr>
+<tr>
+<td><a name="xmlWrapped"></a>wrapped</td>
+<td style="text-align:center"><code>boolean</code></td>
+<td>MAY be used only for an array definition. Signifies whether the array is wrapped (for example, <code>&lt;books&gt;&lt;book/&gt;&lt;book/&gt;&lt;/books&gt;</code>) or unwrapped (<code>&lt;book/&gt;&lt;book/&gt;</code>). Default value is <code>false</code>. The definition takes effect only when defined alongside <code>type</code> being <code>array</code> (outside the <code>items</code>).</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="xmlExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="xml-object-examples">XML Object Examples</h5>
+<p>The examples of the XML object definitions are included inside a property definition of a <a href="#schemaObject">Schema Object</a> with a sample of the XML representation of it.</p>
+<h6 id="no-xml-element">No XML Element</h6>
+<p>Basic string property:</p>
+<pre><code class="lang-js">{
+    &quot;animals&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+    }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: string
+</code></pre>
+<pre><code class="lang-xml">&lt;animals&gt;...&lt;/animals&gt;
+</code></pre>
+<p>Basic string array property (<a href="#xmlWrapped"><code>wrapped</code></a> is <code>false</code> by default):</p>
+<pre><code class="lang-js">{
+    &quot;animals&quot;: {
+        &quot;type&quot;: &quot;array&quot;,
+        &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+        }
+    }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: array
+  items:
+    type: string
+</code></pre>
+<pre><code class="lang-xml">&lt;animals&gt;...&lt;/animals&gt;
+&lt;animals&gt;...&lt;/animals&gt;
+&lt;animals&gt;...&lt;/animals&gt;
+</code></pre>
+<h6 id="xml-name-replacement">XML Name Replacement</h6>
+<pre><code class="lang-js">{
+  &quot;animals&quot;: {
+    &quot;type&quot;: &quot;string&quot;,
+    &quot;xml&quot;: {
+      &quot;name&quot;: &quot;animal&quot;
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: string
+  xml:
+    name: animal
+</code></pre>
+<pre><code class="lang-xml">&lt;animal&gt;...&lt;/animal&gt;
+</code></pre>
+<h6 id="xml-attribute-prefix-and-namespace">XML Attribute, Prefix and Namespace</h6>
+<p>In this example, a full model definition is shown.</p>
+<pre><code class="lang-js">{
+  &quot;Person&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;id&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;int32&quot;,
+        &quot;xml&quot;: {
+          &quot;attribute&quot;: true
+        },
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;xml&quot;: {
+            &quot;namespace&quot;: &quot;http://swagger.io/schema/sample&quot;,
+            &quot;prefix&quot;: &quot;sample&quot;
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">Person:
+  type: object
+  properties:
+    id:
+      type: integer
+      format: int32
+      xml:
+        attribute: true
+      name:
+        type: string
+        xml:
+          namespace: http://swagger.io/schema/sample
+          prefix: sample
+</code></pre>
+<pre><code class="lang-xml">&lt;Person id=&quot;123&quot;&gt;
+    &lt;sample:name xlmns:sample=&quot;http://swagger.io/schema/sample&quot;&gt;example&lt;/sample:name&gt;
+&lt;/Person&gt;
+</code></pre>
+<h6 id="xml-arrays">XML Arrays</h6>
+<p>Changing the element names:</p>
+<pre><code class="lang-js">{
+  &quot;animals&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;xml&quot;: {
+        &quot;name&quot;: &quot;animal&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: array
+  items:
+    type: string
+    xml:
+      name: animal
+</code></pre>
+<pre><code class="lang-xml">&lt;animal&gt;value&lt;/animal&gt;
+&lt;animal&gt;value&lt;/animal&gt;
+</code></pre>
+<p>The external <code>name</code> property has no effect on the XML:</p>
+<pre><code class="lang-js">{
+  &quot;animals&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;xml&quot;: {
+        &quot;name&quot;: &quot;animal&quot;
+      }
+    },
+    &quot;xml&quot;: {
+      &quot;name&quot;: &quot;aliens&quot;
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: array
+  items:
+    type: string
+    xml:
+      name: animal
+  xml:
+    name: aliens
+</code></pre>
+<pre><code class="lang-xml">&lt;animal&gt;value&lt;/animal&gt;
+&lt;animal&gt;value&lt;/animal&gt;
+</code></pre>
+<p>Even when the array is wrapped, if no name is explicitly defined, the same name will be used both internally and externally:</p>
+<pre><code class="lang-js">{
+  &quot;animals&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;xml&quot;: {
+      &quot;wrapped&quot;: true
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: array
+  items:
+    type: string
+  xml:
+    wrapped: true
+</code></pre>
+<pre><code class="lang-xml">&lt;animals&gt;
+  &lt;animals&gt;value&lt;/animals&gt;
+  &lt;animals&gt;value&lt;/animals&gt;
+&lt;/animals&gt;
+</code></pre>
+<p>To overcome the above example, the following definition can be used:</p>
+<pre><code class="lang-js">{
+  &quot;animals&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;xml&quot;: {
+        &quot;name&quot;: &quot;animal&quot;
+      }
+    },
+    &quot;xml&quot;: {
+      &quot;wrapped&quot;: true
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: array
+  items:
+    type: string
+    xml:
+      name: animal
+  xml:
+    wrapped: true
+</code></pre>
+<pre><code class="lang-xml">&lt;animals&gt;
+  &lt;animal&gt;value&lt;/animal&gt;
+  &lt;animal&gt;value&lt;/animal&gt;
+&lt;/animals&gt;
+</code></pre>
+<p>Affecting both internal and external names:</p>
+<pre><code class="lang-js">{
+  &quot;animals&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;xml&quot;: {
+        &quot;name&quot;: &quot;animal&quot;
+      }
+    },
+    &quot;xml&quot;: {
+      &quot;name&quot;: &quot;aliens&quot;,
+      &quot;wrapped&quot;: false
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: array
+  items:
+    type: string
+    xml:
+      name: animal
+  xml:
+    name: aliens
+    wrapped: false
+</code></pre>
+<pre><code class="lang-xml">&lt;aliens&gt;
+  &lt;animal&gt;value&lt;/animal&gt;
+  &lt;animal&gt;value&lt;/animal&gt;
+&lt;/aliens&gt;
+</code></pre>
+<p>If we change the external element but not the internal ones:</p>
+<pre><code class="lang-js">{
+  &quot;animals&quot;: {
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;xml&quot;: {
+      &quot;name&quot;: &quot;aliens&quot;,
+      &quot;wrapped&quot;: true
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">animals:
+  type: array
+  items:
+    type: string
+  xml:
+    name: aliens
+    wrapped: true
+</code></pre>
+<pre><code class="lang-xml">&lt;aliens&gt;
+  &lt;aliens&gt;value&lt;/aliens&gt;
+  &lt;aliens&gt;value&lt;/aliens&gt;
+&lt;/aliens&gt;
+</code></pre>
+<h4 id="-a-name-definitionsobject-a-definitions-object"><a name="definitionsObject"></a>Definitions Object</h4>
+<p>An object to hold data types that can be consumed and produced by operations. These data types can be primitives, arrays or models.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="definitionsName"></a>{name}</td>
+<td style="text-align:center"><a href="#schemaObject">Schema Object</a></td>
+<td>A single definition, mapping a &quot;name&quot; to the schema it defines.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="definitions-object-example">Definitions Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;Category&quot;: {
+    &quot;properties&quot;: {
+      &quot;id&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;int64&quot;
+      },
+      &quot;name&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    }
+  },
+  &quot;Tag&quot;: {
+    &quot;properties&quot;: {
+      &quot;id&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;int64&quot;
+      },
+      &quot;name&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">Category:
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+Tag:
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+</code></pre>
+<h4 id="-a-name-parametersdefinitionsobject-a-parameters-definitions-object"><a name="parametersDefinitionsObject"></a>Parameters Definitions Object</h4>
+<p>An object to hold parameters to be reused across operations. Parameter definitions can be referenced to the ones defined here.</p>
+<p>This does <em>not</em> define global operation parameters.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="pdName"></a>{name}</td>
+<td style="text-align:center"><a href="#parameterObject">Parameter Object</a></td>
+<td>A single parameter definition, mapping a &quot;name&quot; to the parameter it defines.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="parameters-definition-object-example">Parameters Definition Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;skipParam&quot;: {
+    &quot;name&quot;: &quot;skip&quot;,
+    &quot;in&quot;: &quot;query&quot;,
+    &quot;description&quot;: &quot;number of items to skip&quot;,
+    &quot;required&quot;: true,
+    &quot;type&quot;: &quot;integer&quot;,
+    &quot;format&quot;: &quot;int32&quot;
+  },
+  &quot;limitParam&quot;: {
+    &quot;name&quot;: &quot;limit&quot;,
+    &quot;in&quot;: &quot;query&quot;,
+    &quot;description&quot;: &quot;max records to return&quot;,
+    &quot;required&quot;: true,
+    &quot;type&quot;: &quot;integer&quot;,
+    &quot;format&quot;: &quot;int32&quot;
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">skipParam:
+  name: skip
+  in: query
+  description: number of items to skip
+  required: true
+  type: integer
+  format: int32
+limitParam:
+  name: limit
+  in: query
+  description: max records to return
+  required: true
+  type: integer
+  format: int32
+</code></pre>
+<h4 id="-a-name-responsesdefinitionsobject-a-responses-definitions-object"><a name="responsesDefinitionsObject"></a>Responses Definitions Object</h4>
+<p>An object to hold responses to be reused across operations. Response definitions can be referenced to the ones defined here.</p>
+<p>This does <em>not</em> define global operation responses.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="rdName"></a>{name}</td>
+<td style="text-align:center"><a href="#responseObject">Response Object</a></td>
+<td>A single response definition, mapping a &quot;name&quot; to the response it defines.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="responses-definitions-object-example">Responses Definitions Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;NotFound&quot;: {
+    &quot;description&quot;: &quot;Entity not found.&quot;
+  },
+  &quot;IllegalInput&quot;: {
+      &quot;description&quot;: &quot;Illegal input for operation.&quot;
+  },
+  &quot;GeneralError&quot;: {
+      &quot;description&quot;: &quot;General Error&quot;,
+      &quot;schema&quot;: {
+          &quot;$ref&quot;: &quot;#/definitions/GeneralError&quot;
+      }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">NotFound:
+  description: Entity not found.
+IllegalInput:
+  description: Illegal input for operation.
+GeneralError:
+  description: General Error
+  schema:
+    $ref: &#39;#/definitions/GeneralError&#39;
+</code></pre>
+<h4 id="-a-name-securitydefinitionsobject-a-security-definitions-object"><a name="securityDefinitionsObject"></a>Security Definitions Object</h4>
+<p>A declaration of the security schemes available to be used in the specification. This does not enforce the security schemes on the operations and only serves to provide the relevant details for each scheme.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="sdName"></a>{name}</td>
+<td style="text-align:center"><a href="#securitySchemeObject">Security Scheme Object</a></td>
+<td>A single security scheme definition, mapping a &quot;name&quot; to the scheme it defines.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="security-definitions-object-example">Security Definitions Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;api_key&quot;: {
+    &quot;type&quot;: &quot;apiKey&quot;,
+    &quot;name&quot;: &quot;api_key&quot;,
+    &quot;in&quot;: &quot;header&quot;
+  },
+  &quot;petstore_auth&quot;: {
+    &quot;type&quot;: &quot;oauth2&quot;,
+    &quot;authorizationUrl&quot;: &quot;http://swagger.io/api/oauth/dialog&quot;,
+    &quot;flow&quot;: &quot;implicit&quot;,
+    &quot;scopes&quot;: {
+      &quot;write:pets&quot;: &quot;modify pets in your account&quot;,
+      &quot;read:pets&quot;: &quot;read your pets&quot;
+    }
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">api_key:
+  type: apiKey
+  name: api_key
+  in: header
+petstore_auth:
+  type: oauth2
+  authorizationUrl: http://swagger.io/api/oauth/dialog
+  flow: implicit
+  scopes:
+    write:pets: modify pets in your account
+    read:pets: read your pets
+</code></pre>
+<h4 id="-a-name-securityschemeobject-a-security-scheme-object"><a name="securitySchemeObject"></a>Security Scheme Object</h4>
+<p>Allows the definition of a security scheme that can be used by the operations. Supported schemes are basic authentication, an API key (either as a header or as a query parameter) and OAuth2&#39;s common flows (implicit, password, application and access code).</p>
+<h5 id="fixed-fields">Fixed Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Validity</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="securitySchemeType"></a>type</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Any</td>
+<td><strong>Required.</strong> The type of the security scheme. Valid values are <code>&quot;basic&quot;</code>, <code>&quot;apiKey&quot;</code> or <code>&quot;oauth2&quot;</code>.</td>
+</tr>
+<tr>
+<td><a name="securitySchemeDescription"></a>description</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Any</td>
+<td>A short description for security scheme.</td>
+</tr>
+<tr>
+<td><a name="securitySchemeName"></a>name</td>
+<td style="text-align:center"><code>string</code></td>
+<td><code>apiKey</code></td>
+<td><strong>Required.</strong> The name of the header or query parameter to be used.</td>
+</tr>
+<tr>
+<td><a name="securitySchemeIn"></a>in</td>
+<td style="text-align:center"><code>string</code></td>
+<td><code>apiKey</code></td>
+<td><strong>Required</strong> The location of the API key. Valid values are <code>&quot;query&quot;</code> or <code>&quot;header&quot;</code>.</td>
+</tr>
+<tr>
+<td><a name="securitySchemeFlow"></a>flow</td>
+<td style="text-align:center"><code>string</code></td>
+<td><code>oauth2</code></td>
+<td><strong>Required.</strong> The flow used by the OAuth2 security scheme. Valid values are <code>&quot;implicit&quot;</code>, <code>&quot;password&quot;</code>, <code>&quot;application&quot;</code> or <code>&quot;accessCode&quot;</code>.</td>
+</tr>
+<tr>
+<td><a name="securitySchemeAuthorizationUrl"></a>authorizationUrl</td>
+<td style="text-align:center"><code>string</code></td>
+<td><code>oauth2</code> (<code>&quot;implicit&quot;</code>, <code>&quot;accessCode&quot;</code>)</td>
+<td><strong>Required.</strong> The authorization URL to be used for this flow. This SHOULD be in the form of a URL.</td>
+</tr>
+<tr>
+<td><a name="securitySchemeTokenUrl"></a>tokenUrl</td>
+<td style="text-align:center"><code>string</code></td>
+<td><code>oauth2</code> (<code>&quot;password&quot;</code>, <code>&quot;application&quot;</code>, <code>&quot;accessCode&quot;</code>)</td>
+<td><strong>Required.</strong> The token URL to be used for this flow. This SHOULD be in the form of a URL.</td>
+</tr>
+<tr>
+<td><a name="securitySchemeScopes"></a>scopes</td>
+<td style="text-align:center"><a href="#scopesObject">Scopes Object</a></td>
+<td><code>oauth2</code></td>
+<td><strong>Required.</strong> The available scopes for the OAuth2 security scheme.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Name</th>
+<th style="text-align:center">Type</th>
+<th>Description </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="securitySchemeExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="security-scheme-object-example">Security Scheme Object Example</h5>
+<h6 id="basic-authentication-sample">Basic Authentication Sample</h6>
+<pre><code class="lang-js">{
+  &quot;type&quot;: &quot;basic&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">type: basic
+</code></pre>
+<h6 id="api-key-sample">API Key Sample</h6>
+<pre><code class="lang-js">{
+  &quot;type&quot;: &quot;apiKey&quot;,
+  &quot;name&quot;: &quot;api_key&quot;,
+  &quot;in&quot;: &quot;header&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">type: apiKey
+name: api_key
+in: header
+</code></pre>
+<h6 id="implicit-oauth2-sample">Implicit OAuth2 Sample</h6>
+<pre><code class="lang-js">{
+  &quot;type&quot;: &quot;oauth2&quot;,
+  &quot;authorizationUrl&quot;: &quot;http://swagger.io/api/oauth/dialog&quot;,
+  &quot;flow&quot;: &quot;implicit&quot;,
+  &quot;scopes&quot;: {
+    &quot;write:pets&quot;: &quot;modify pets in your account&quot;,
+    &quot;read:pets&quot;: &quot;read your pets&quot;
+  }
+}
+</code></pre>
+<pre><code class="lang-yaml">type: oauth2
+authorizationUrl: http://swagger.io/api/oauth/dialog
+flow: implicit
+scopes:
+  write:pets: modify pets in your account
+  read:pets: read your pets
+</code></pre>
+<h4 id="-a-name-scopesobject-a-scopes-object"><a name="scopesObject"></a>Scopes Object</h4>
+<p>Lists the available scopes for an OAuth2 security scheme.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="scopesName"></a>{name}</td>
+<td style="text-align:center"><code>string</code></td>
+<td>Maps between a name of a scope to a short description of it (as the value of the property).</td>
+</tr>
+</tbody>
+</table>
+<h5 id="patterned-objects">Patterned Objects</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="scopesExtensions"></a>^x-</td>
+<td style="text-align:center">Any</td>
+<td>Allows extensions to the Swagger Schema. The field name MUST begin with <code>x-</code>, for example, <code>x-internal-id</code>. The value can be <code>null</code>, a primitive, an array or an object. See <a href="#vendorExtensions">Vendor Extensions</a> for further details.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="scopes-object-example">Scopes Object Example</h5>
+<pre><code class="lang-js">{
+  &quot;write:pets&quot;: &quot;modify pets in your account&quot;,
+  &quot;read:pets&quot;: &quot;read your pets&quot;
+}
+</code></pre>
+<pre><code class="lang-yaml">write:pets: modify pets in your account
+read:pets: read your pets
+</code></pre>
+<h4 id="-a-name-securityrequirementobject-a-security-requirement-object"><a name="securityRequirementObject"></a>Security Requirement Object</h4>
+<p>Lists the required security schemes to execute this operation. The object can have multiple security schemes declared in it which are all required (that is, there is a logical AND between the schemes).</p>
+<p>The name used for each property MUST correspond to a security scheme declared in the <a href="#securityDefinitionsObject">Security Definitions</a>.</p>
+<h5 id="patterned-fields">Patterned Fields</h5>
+<table>
+<thead>
+<tr>
+<th>Field Pattern</th>
+<th style="text-align:center">Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="securityRequirementsName"></a>{name}</td>
+<td style="text-align:center">[<code>string</code>]</td>
+<td>Each name must correspond to a security scheme which is declared in the <a href="#securityDefinitions">Security Definitions</a>. If the security scheme is of type <code>&quot;oauth2&quot;</code>, then the value is a list of scope names required for the execution. For other security scheme types, the array MUST be empty.</td>
+</tr>
+</tbody>
+</table>
+<h5 id="security-requirement-object-examples">Security Requirement Object Examples</h5>
+<h6 id="non-oauth2-security-requirement">Non-OAuth2 Security Requirement</h6>
+<pre><code class="lang-js">{
+  &quot;api_key&quot;: []
+}
+</code></pre>
+<pre><code class="lang-yaml">api_key: []
+</code></pre>
+<h6 id="oauth2-security-requirement">OAuth2 Security Requirement</h6>
+<pre><code class="lang-js">{
+  &quot;petstore_auth&quot;: [
+    &quot;write:pets&quot;,
+    &quot;read:pets&quot;
+  ]
+}
+</code></pre>
+<pre><code class="lang-yaml">petstore_auth:
+- write:pets
+- read:pets
+</code></pre>
+<h3 id="-a-name-vendorextensions-a-specification-extensions"><a name="vendorExtensions"></a>Specification Extensions</h3>
+<p>While the Swagger Specification tries to accommodate most use cases, additional data can be added to extend the specification at certain points.</p>
+<p>The extensions properties are always prefixed by <code>&quot;x-&quot;</code> and can have any valid JSON format value.</p>
+<p>The extensions may or may not be supported by the available tooling, but those may be extended as well to add requested support (if tools are internal or open-sourced).</p>
+<h3 id="-a-name-securityfiltering-a-security-filtering"><a name="securityFiltering"></a>Security Filtering</h3>
+<p>Some objects in the Swagger specification may be declared and remain empty, or completely be removed, even though they are inherently the core of the API documentation. </p>
+<p>The reasoning behind it is to allow an additional layer of access control over the documentation itself. While not part of the specification itself, certain libraries may choose to allow access to parts of the documentation based on some form of authentication/authorization.</p>
+<p>Two examples for this:</p>
+<ol>
+<li>The <a href="#pathsObject">Paths Object</a> may be empty. It may be counterintuitive, but this may tell the viewer that they got to the right place, but can&#39;t access any documentation. They&#39;d still have access to the <a href="#infoObject">Info Object</a> which may contain additional information regarding authentication.</li>
+<li>The <a href="#pathItemObject">Path Item Object</a> may be empty. In this case, the viewer will be aware that the path exists, but will not be able to see any of its operations or parameters. This is different than hiding the path itself from the <a href="#pathsObject">Paths Object</a> so the user will not be aware of its existence. This allows the documentation provider a finer control over what the viewer can see.</li>
+</ol>
+
+</body>
