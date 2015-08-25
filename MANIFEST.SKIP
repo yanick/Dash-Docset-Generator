@@ -1,0 +1,7 @@
+^dist.ini
+^MANIFEST.SKIP
+Dash-Docset-Generator.*
+^\.gitignore
+^\.git
+^\.build
+
