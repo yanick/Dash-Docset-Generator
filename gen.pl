@@ -18,11 +18,12 @@ my $docset = Dash::Docset::Generator->new(
     homepage => 'https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md',
 );
 
-my $index = wq( '<html><head/><body/></html>' );
+my $index = new_doc();
 $index->find('body')->append( path('index.html')->slurp );
 
 my %files = ( 'index.html' => $index );
 
+# process all the schema objects
 $index->find('h4')->each(sub{
     warn $_->text;
         
@@ -53,27 +54,33 @@ $index->find('h4')->each(sub{
 
 });
 
-my $type = wq('<html><head/><body/></html>');
-my $x = $index->find('h3')->filter(sub{ $_->text =~ /Data Types/ });
-my $t = $x->text;
-$x->find('a')->attr( 'docset-type' => 'Type' );
-$x->find('a')->attr( 'docset-name' => $t );
-$type->find('body')->append($x);
-$type->find('body')->append($x->next_until('h3'));
-$x->next_until('h3')->and_back->remove;
+{
+    # process the type section
+    
+    my $type = wq('<html><head/><body/></html>');
+    my $x = $index->find('h3')->filter(sub{ $_->text =~ /Data Types/ });
+    my $t = $x->text;
+    my $a = $x->prepend( '<a/>' );
 
-$files{'types.html'} = $type;
+    $a->attr( 'docset-type' => 'Type' );
+    $a->attr( 'docset-name' => $t );
 
-$type->find( 'a' )->each( sub {
-    my $ref = $_->attr('name') or return;
-    my $xpath = "//a[\@href='#$ref']";
+    my $block = $x->add( $x->next_until('h3') );
+    $type->find('body')->append($block);
+    $block->remove;
 
-    $_->find(\$xpath)->each(sub{
-        $_->attr('href', 'types.html' . $_->attr('href') );
-    }) for values %files;
-});
+    $files{'types.html'} = $type;
 
+    $type->find( 'a' )->each( sub {
+        my $ref = $_->attr('name') or return;
+        my $xpath = "//a[\@href='#$ref']";
 
+        $_->find(\$xpath)->each(sub{
+            $_->attr('href', 'types.html' . $_->attr('href') );
+        }) for values %files;
+    });
+
+}
 
 $docset->add_doc( $_->[0], $_->[1] ) for pairs %files;
 $docset->add_css( 'github-style.css' );
@@ -83,4 +90,7 @@ $docset->add_css( 'prism.css' );
 $docset->generate;
 
 
+sub new_doc {
+    wq( '<html><head/><body/></html>' );
+}
 
